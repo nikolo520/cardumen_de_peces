@@ -1,47 +1,140 @@
-turtles-own [
+globals
+[
+  velocidad_pez
+  velocidad_tiburon
+  vision_tiburon
+  distancia_caceria
+]
+
+turtles-own
+[
   vecinos_de_cardumen
   vecino_mas_cercano
+  vecinos_de_tiburon
+  vecino_mas_cercano_de_tiburon
 ]
 
 breed [peces pez]
 breed [tiburones tiburon]
+breed [plantas planta]
 
 to reiniciar
   clear-all
-  ask patches[
+
+  set velocidad_pez 0.2
+  set velocidad_tiburon 0.5
+  set vision_tiburon 20
+  set distancia_caceria 10
+
+  ask patches
+  [
     set pcolor blue
   ]
 
   create-peces poblacion_peces
-  [ set color yellow - 2 + random 5
+  [
+    set color yellow - 2 + random 5
     set size 1.5
     set shape "fish"
-    setxy random-xcor random-ycor ]
+    setxy random-xcor random-ycor
+  ]
 
   create-tiburones poblacion_tiburones
-  [ set color gray
+   [
+    set color gray
     set size 10
     set shape "shark"
-    setxy random-xcor random-ycor ]
+    setxy random-xcor random-ycor
+    hide-turtle
+  ]
+
+  dibujar_plantas
 
   reset-ticks
 end
 
+to dibujar_plantas
+  let x_inicial min-pxcor
+
+  while[x_inicial <= max-pxcor]
+  [
+    create-plantas 1
+    [
+      set color green
+      set size 3
+      set shape "plant"
+      setxy x_inicial (min-pycor + 1)
+    ]
+
+    set x_inicial x_inicial + 3
+  ]
+end
 
 to iniciar
-  ask peces [ cardumen ]
-  repeat 5 [ ask peces [ fd 0.8 ] display]
+  ask peces
+  [
+    cardumen
+  ]
+
+  ifelse depredador
+  [
+    ask tiburones
+    [
+      show-turtle
+      caceria
+    ]
+  ]
+  [
+    ask tiburones
+    [
+      hide-turtle
+    ]
+  ]
+
+  repeat 5
+  [
+    ask peces
+    [
+      fd velocidad_pez
+    ]
+
+    ifelse depredador
+    [
+      ask tiburones
+      [
+        show-turtle
+        fd velocidad_tiburon
+      ]
+    ]
+    [
+      ask tiburones
+      [
+        hide-turtle
+      ]
+    ]
+    display
+  ]
+
   tick
 end
+
+;;;;;;;;;;;;;;;;;;;;; Peces ;;;;;;;;;;;;;;;;;;;;;;;
 
 to cardumen
   buscar_vecinos_de_cardumen
   if any? vecinos_de_cardumen
-    [ buscar_vecino_mas_cercano
-      ifelse distance vecino_mas_cercano < distancia_minima
-        [ separacion ]
-        [ direccion
-          coherencia ] ]
+  [
+    buscar_vecino_mas_cercano
+
+    ifelse distance vecino_mas_cercano < distancia_minima
+    [
+      separacion
+    ]
+    [
+      direccion
+      coherencia
+    ]
+  ]
 end
 
 to separacion
@@ -57,7 +150,7 @@ to coherencia
 end
 
 to buscar_vecinos_de_cardumen
-  set vecinos_de_cardumen other peces in-radius vision
+  set vecinos_de_cardumen other peces in-radius vision ;; busca el vecino mas cercano
 end
 
 to buscar_vecino_mas_cercano
@@ -95,12 +188,79 @@ to girar_como_maximo [giro giro_maximo]
       [ lt giro_maximo ] ]
   [ rt giro ]
 end
+
+;;;;;;;;;;;;;;;;;;;;;;; Tiburones ;;;;;;;;;;;;;;;;;;;;
+
+to caceria
+  buscar_vecinos_de_tiburon
+
+  if any? vecinos_de_tiburon
+  [
+    buscar_vecino_mas_cercano_tiburon
+
+    ifelse distance vecino_mas_cercano_de_tiburon < distancia_caceria
+    [
+      modo_caceria
+    ]
+    [
+      set velocidad_tiburon 0.5
+      ;direccion
+      ;coherencia
+    ]
+  ]
+end
+
+to buscar_vecinos_de_tiburon
+  set vecinos_de_tiburon other peces in-radius vision_tiburon ;; busca el vecino mas cercano
+end
+
+to buscar_vecino_mas_cercano_tiburon
+  set vecino_mas_cercano_de_tiburon min-one-of vecinos_de_tiburon [distance myself]
+end
+
+to modo_caceria
+  set velocidad_tiburon 1.5
+  let dx_vecino_mas_cercano [dx] of vecino_mas_cercano_de_tiburon
+  let dy_vecino_mas_cercano [dy] of vecino_mas_cercano_de_tiburon
+
+  let angulo atan dx_vecino_mas_cercano dy_vecino_mas_cercano
+
+  lt (subtract-headings angulo heading)
+  ;probando
+
+  ;let xcor_vecino_mas_cercano [xcor] of vecino_mas_cercano_de_tiburon
+  ;let ycor_vecino_mas_cercano [ycor] of vecino_mas_cercano_de_tiburon
+  ;let pendiente ((ycor_vecino_mas_cercano - ycor) / (xcor_vecino_mas_cercano - xcor))
+  ;let b (ycor - (pendiente * xcor))
+
+  ;set ycor ((pendiente * (velocidad_tiburon + xcor)) + b)
+  ;set xcor (velocidad_tiburon + xcor)
+
+end
+
+
+to probando
+  if probar
+  [
+    let dx_vecino_mas_cercano [dx] of vecino_mas_cercano_de_tiburon
+  let dy_vecino_mas_cercano [dy] of vecino_mas_cercano_de_tiburon
+
+  let angulo atan dx_vecino_mas_cercano dy_vecino_mas_cercano
+
+  ;rt (subtract-headings angulo heading)
+    user-message angulo
+    user-message heading
+    user-message (subtract-headings angulo heading)
+    set probar false
+  ]
+end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
-482
-24
-1057
-600
+210
+10
+925
+726
 -1
 -1
 7.0
@@ -113,10 +273,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--40
-40
--40
-40
+-50
+50
+-50
+50
 1
 1
 1
@@ -124,25 +284,25 @@ ticks
 30.0
 
 SLIDER
-0
-20
-234
-53
+18
+10
+190
+43
 poblacion_peces
 poblacion_peces
 0
 100
-53.0
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-0
-65
-233
-98
+17
+50
+189
+83
 poblacion_tiburones
 poblacion_tiburones
 0
@@ -154,10 +314,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-5
-123
-107
-168
+19
+101
+97
+134
 Reiniciar
 reiniciar
 NIL
@@ -171,85 +331,85 @@ NIL
 1
 
 SLIDER
-0
-199
-236
-232
+23
+155
+195
+188
 vision
 vision
 0.0
 10.0
-6.0
+3.5
 0.5
 1
 patches
 HORIZONTAL
 
 SLIDER
-0
-251
-233
-284
+24
+206
+194
+239
 distancia_minima
 distancia_minima
 0.0
 5.0
-1.0
+2.0
 0.25
 1
 patches
 HORIZONTAL
 
 SLIDER
-0
-311
-236
-344
+24
+258
+195
+291
 giro_maximo_separacion
 giro_maximo_separacion
 0.0
 20.0
-3.0
+5.25
 0.25
 1
 grados
 HORIZONTAL
 
 SLIDER
-0
+24
+314
+197
+347
+giro_maximo_coherente
+giro_maximo_coherente
+0.0
+20.0
+5.0
+0.25
+1
+grados
+HORIZONTAL
+
+SLIDER
+22
 364
-236
+195
 397
-giro_maximo_coherente
-giro_maximo_coherente
-0.0
-20.0
-3.25
-0.25
-1
-grados
-HORIZONTAL
-
-SLIDER
-0
-423
-236
-456
 giro_maximo_alineacion
 giro_maximo_alineacion
 0.0
 20.0
-17.5
+5.5
 0.25
 1
 grados
 HORIZONTAL
 
 BUTTON
-121
-123
-229
-168
+113
+100
+185
+138
 Iniciar
 iniciar
 T
@@ -261,6 +421,28 @@ NIL
 NIL
 NIL
 0
+
+SWITCH
+40
+441
+160
+474
+depredador
+depredador
+0
+1
+-1000
+
+SWITCH
+50
+606
+153
+639
+probar
+probar
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -492,17 +674,17 @@ Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
 shark
-false
+true
 0
-Polygon -7500403 true true 283 153 288 149 271 146 301 145 300 138 247 119 190 107 104 117 54 133 39 134 10 99 9 112 19 142 9 175 10 185 40 158 69 154 64 164 80 161 86 156 132 160 209 164
-Polygon -7500403 true true 199 161 152 166 137 164 169 154
-Polygon -7500403 true true 188 108 172 83 160 74 156 76 159 97 153 112
-Circle -16777216 true false 256 129 12
-Line -16777216 false 222 134 222 150
-Line -16777216 false 217 134 217 150
-Line -16777216 false 212 134 212 150
-Polygon -7500403 true true 78 125 62 118 63 130
-Polygon -7500403 true true 121 157 105 161 101 156 106 152
+Polygon -7500403 true true 153 17 149 12 146 29 145 -1 138 0 119 53 107 110 117 196 133 246 134 261 99 290 112 291 142 281 175 291 185 290 158 260 154 231 164 236 161 220 156 214 160 168 164 91
+Polygon -7500403 true true 161 101 166 148 164 163 154 131
+Polygon -7500403 true true 108 112 83 128 74 140 76 144 97 141 112 147
+Circle -16777216 true false 129 32 12
+Line -16777216 false 134 78 150 78
+Line -16777216 false 134 83 150 83
+Line -16777216 false 134 88 150 88
+Polygon -7500403 true true 125 222 118 238 130 237
+Polygon -7500403 true true 157 179 161 195 156 199 152 194
 
 sheep
 false
