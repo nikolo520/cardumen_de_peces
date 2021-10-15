@@ -24,12 +24,12 @@ to reiniciar
   set giro_maximo_separacion 30.0
   set giro_maximo_alineacion 30.0
   set giro_maximo_coherente 30.0
-  set velocidad_pez 0.5
-  set velocidad_tiburon 0.2
+  set velocidad_pez 0.8
+  set velocidad_tiburon 0.3
   set vision_tiburon 20
   set distancia_caceria 10
 
-  ask patches [ set pcolor 104 ]
+  ask patches [ set pcolor 103 ]
 
   create-peces poblacion_peces
   [ set color yellow - 2 + random 3
@@ -41,8 +41,8 @@ to reiniciar
 
   if depredador
   [create-tiburones poblacion_tiburones
-   [set color gray
-    set size 10
+   [set color 8
+    set size 8
     set shape "shark"
     setxy random-xcor random-ycor]]
 
@@ -83,8 +83,8 @@ end
 
 to nadar
   ifelse random 10 < 5
-  [lt 15 + random 20]
-  [rt 15 + random 20]
+  [lt 15 + random 10]
+  [rt 15 + random 10]
 end
 
 ;;;;;;;;;;;;;;;;;;;;; Peces ;;;;;;;;;;;;;;;;;;;;;;;
@@ -93,7 +93,10 @@ to cardumen
   buscar_tiburones
   ifelse any? tiburones_cerca
   [ buscar_tiburon_mas_cercano
-    huir_del_tiburon ]
+    ifelse random 10 < 5
+    [rt 50]
+    [lt 50]]
+    ;;huir_del_tiburon ]
   [ buscar_peces_de_cardumen
     ifelse any? peces_de_cardumen
     [ buscar_pez_mas_cercano
@@ -178,9 +181,12 @@ to caceria
   ifelse any? peces_de_cardumen
     [ buscar_pez_mas_cercano
       ifelse distance pez_mas_cercano < distancia_caceria
-      [ cazar ]
-      [ nadar ]]
-    [nadar]
+      [ set velocidad_tiburon 0.8
+        cazar ]
+      [ set velocidad_tiburon 0.5
+        nadar ]]
+    [set velocidad_tiburon 0.5
+     nadar]
 end
 
 to cazar
@@ -227,7 +233,7 @@ end
 GRAPHICS-WINDOW
 210
 10
-715
+1345
 516
 -1
 -1
@@ -241,8 +247,8 @@ GRAPHICS-WINDOW
 1
 1
 1
--35
-35
+-80
+80
 -35
 35
 1
@@ -275,7 +281,7 @@ poblacion_tiburones
 poblacion_tiburones
 1
 10
-1.0
+2.0
 1
 1
 tiburones
@@ -306,9 +312,9 @@ SLIDER
 vision_pez
 vision_pez
 0.0
+20.0
 10.0
-7.5
-0.5
+5.0
 1
 patches
 HORIZONTAL
@@ -322,7 +328,7 @@ distancia_minima
 distancia_minima
 0.0
 0.50
-0.25
+0.4
 0.10
 1
 patches
@@ -352,15 +358,15 @@ SWITCH
 295
 depredador
 depredador
-1
+0
 1
 -1000
 
 SWITCH
-50
-606
-153
-639
+44
+352
+147
+385
 probar
 probar
 1
