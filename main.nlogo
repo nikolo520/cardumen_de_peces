@@ -1,39 +1,31 @@
 globals [
-  velocidad_pez
-  velocidad_tiburon
-  vision_tiburon
-  distancia_caceria
-  giro_maximo_separacion
-  giro_maximo_alineacion
-  giro_maximo_coherente
+  velocidad_pez ;; Velocidad de cada agente de la especie pez
+  velocidad_tiburon ;; Velocidad de cada agente de la especie pez
 ]
 
 turtles-own [
-  peces_de_cardumen
-  pez_mas_cercano
-  tiburones_cerca
-  tiburon_mas_cercano
+  peces_de_cardumen ;; peces que el pez tiene más cercanos
+  pez_mas_cercano ;; el pez más cercano y al cual tendrá como referencia
+  tiburones_cerca ;; tiburones que ve ( si los hay )
+  tiburon_mas_cercano ; el tiburon más cercano
 ]
 
 breed [peces pez]
 breed [tiburones tiburon]
+breed [comida pisca]
 breed [plantas planta]
 
 to reiniciar
   clear-all
-  set giro_maximo_separacion 30.0
-  set giro_maximo_alineacion 30.0
-  set giro_maximo_coherente 30.0
-  set velocidad_pez 0.8
-  set velocidad_tiburon 0.3
-  set vision_tiburon 20
-  set distancia_caceria 10
+
+  set velocidad_pez 0.5
+  set velocidad_tiburon 0.8
 
   ask patches [ set pcolor 103 ]
 
   create-peces poblacion_peces
   [ set color yellow - 2 + random 3
-    set size 1.5
+    set size 1.8
     set shape "fish"
     setxy random-xcor random-ycor
     set peces_de_cardumen no-turtles
@@ -93,26 +85,40 @@ to cardumen
   buscar_tiburones
   ifelse any? tiburones_cerca
   [ buscar_tiburon_mas_cercano
-    ifelse random 10 < 5
-    [rt 50]
-    [lt 50]]
-    ;;huir_del_tiburon ]
-  [ buscar_peces_de_cardumen
-    ifelse any? peces_de_cardumen
+    huir ]
+  [ nadar
+    buscar_peces_de_cardumen
+    if any? peces_de_cardumen
     [ buscar_pez_mas_cercano
       ifelse distance pez_mas_cercano < distancia_minima
-      [ separacion ]
-      [ direccion
-        coherencia ]]
-    [nadar] ]
+      [ nadar ]
+      [ coherencia direccion ]]
+   ]
+end
+
+to huir
+  ifelse random 10 < 5
+    [ rt 15
+      fd 0.1
+      rt 15
+      fd 0.1
+      rt 15
+  ]
+    [lt 15
+    fd 0.1
+    lt 15
+    fd 0.1
+    lt 15
+  ]
 end
 
 to separacion
+  nadar
   alejarse_de ([heading] of pez_mas_cercano) giro_maximo_separacion
 end
 
 to direccion
-  girar_hacia promedio_direccion_cardumen giro_maximo_alineacion
+  girar_hacia promedio_direccion_cardumen giro_maximo_direccion
 end
 
 to coherencia
@@ -120,7 +126,7 @@ to coherencia
 end
 
 to buscar_peces_de_cardumen
-  set peces_de_cardumen other peces in-radius vision_pez ;; busca el vecino mas cercano
+  set peces_de_cardumen other peces in-radius vision_pez
 end
 
 to buscar_pez_mas_cercano
@@ -133,13 +139,6 @@ end
 
 to buscar_tiburon_mas_cercano
   set tiburon_mas_cercano min-one-of tiburones_cerca [distance myself]
-end
-
-to huir_del_tiburon
-  let dx_tiburon_mas_cercano [dx] of tiburones_cerca
-  let dy_tiburon_mas_cercano [dy] of tiburones_cerca
-  let angulo atan dx_tiburon_mas_cercano dy_tiburon_mas_cercano
-  lt (subtract-headings angulo heading)
 end
 
 to-report promedio_direccion_cardumen
@@ -179,61 +178,25 @@ end
 to caceria
   buscar_peces_de_cardumen
   ifelse any? peces_de_cardumen
-    [ buscar_pez_mas_cercano
+    [ ask other peces in-radius vision_pez [fd 0.5]
+      buscar_pez_mas_cercano
       ifelse distance pez_mas_cercano < distancia_caceria
-      [ set velocidad_tiburon 0.8
+      [ set velocidad_tiburon 1
         cazar ]
-      [ set velocidad_tiburon 0.5
+      [ set velocidad_tiburon 0.8
         nadar ]]
-    [set velocidad_tiburon 0.5
+    [set velocidad_tiburon 0.8
      nadar]
 end
 
 to cazar
-  alejarse_de ([heading] of pez_mas_cercano) 20.0
-end
-
-to modo_caceria
-  set velocidad_tiburon 0.6
-  let dx_pez_mas_cercano [dx] of tiburon_mas_cercano
-  let dy_pez_mas_cercano [dy] of tiburon_mas_cercano
-
-  let angulo atan dx_pez_mas_cercano dy_pez_mas_cercano
-
-  lt (subtract-headings angulo heading)
-  ;probando
-
-  ;let xcor_pez_mas_cercano [xcor] of tiburon_mas_cercano
-  ;let ycor_pez_mas_cercano [ycor] of tiburon_mas_cercano
-  ;let pendiente ((ycor_pez_mas_cercano - ycor) / (xcor_pez_mas_cercano - xcor))
-  ;let b (ycor - (pendiente * xcor))
-
-  ;set ycor ((pendiente * (velocidad_tiburon + xcor)) + b)
-  ;set xcor (velocidad_tiburon + xcor)
-
-end
-
-
-to probando
-  if probar
-  [
-    let dx_pez_mas_cercano [dx] of tiburon_mas_cercano
-  let dy_pez_mas_cercano [dy] of tiburon_mas_cercano
-
-  let angulo atan dx_pez_mas_cercano dy_pez_mas_cercano
-
-  ;rt (subtract-headings angulo heading)
-    user-message angulo
-    user-message heading
-    user-message (subtract-headings angulo heading)
-    set probar false
-  ]
+  girar_hacia ([heading] of pez_mas_cercano) 10.0
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+329
 10
-1345
+1464
 516
 -1
 -1
@@ -260,7 +223,7 @@ ticks
 SLIDER
 18
 10
-195
+224
 43
 poblacion_peces
 poblacion_peces
@@ -274,24 +237,24 @@ HORIZONTAL
 
 SLIDER
 17
-50
-196
-83
+54
+223
+87
 poblacion_tiburones
 poblacion_tiburones
 1
-10
-2.0
+5
+1.0
 1
 1
 tiburones
 HORIZONTAL
 
 BUTTON
-19
-99
-102
-138
+17
+94
+113
+127
 Reiniciar
 reiniciar
 NIL
@@ -305,40 +268,40 @@ NIL
 1
 
 SLIDER
-23
-155
-195
-188
+19
+136
+222
+169
 vision_pez
 vision_pez
 0.0
 20.0
 10.0
-5.0
+2.5
 1
 patches
 HORIZONTAL
 
 SLIDER
-24
-206
-194
-239
+21
+178
+222
+211
 distancia_minima
 distancia_minima
-0.0
-0.50
-0.4
-0.10
+0.2
+0.6
+0.3
+0.1
 1
 patches
 HORIZONTAL
 
 BUTTON
-113
-100
-185
-138
+126
+93
+221
+126
 Iniciar
 iniciar
 T
@@ -352,26 +315,90 @@ NIL
 0
 
 SWITCH
-24
-262
-183
-295
+42
+535
+201
+568
 depredador
 depredador
 0
 1
 -1000
 
-SWITCH
-44
-352
-147
-385
-probar
-probar
+SLIDER
+21
+272
+221
+305
+vision_tiburon
+vision_tiburon
+10
+30
+25.0
+5
 1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+398
+223
+431
+giro_maximo_separacion
+giro_maximo_separacion
+10.0
+30.0
+20.0
+5.0
 1
--1000
+grados
+HORIZONTAL
+
+SLIDER
+22
+315
+220
+348
+distancia_caceria
+distancia_caceria
+10.0
+30.0
+20.0
+5.0
+1
+NIL
+HORIZONTAL
+
+SLIDER
+25
+442
+225
+475
+giro_maximo_direccion
+giro_maximo_direccion
+10
+30
+20.0
+5
+1
+grados
+HORIZONTAL
+
+SLIDER
+24
+486
+226
+519
+giro_maximo_coherente
+giro_maximo_coherente
+10.0
+30.0
+20.0
+5.0
+1
+grados
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
