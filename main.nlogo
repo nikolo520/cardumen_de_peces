@@ -61,7 +61,9 @@ to dibujar_plantas
 end
 
 to iniciar
-  ask peces[cardumen]
+  ifelse agrupar
+  [ask peces [cardumen]]
+  [ask peces [nadar]]
 
   if depredador [ ask tiburones [ caceria ] ]
 
@@ -176,6 +178,7 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;; Tiburones ;;;;;;;;;;;;;;;;;;;;
 
 to caceria
+  ask peces-here [ die ]
   buscar_peces_de_cardumen
   ifelse any? peces_de_cardumen
     [ ask other peces in-radius vision_pez [fd 0.5]
@@ -194,10 +197,10 @@ to cazar
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-329
+638
 10
-1464
-516
+1493
+586
 -1
 -1
 7.0
@@ -210,10 +213,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--80
-80
--35
-35
+-60
+60
+-40
+40
 1
 1
 1
@@ -315,9 +318,9 @@ NIL
 0
 
 SWITCH
-42
+24
 535
-201
+127
 568
 depredador
 depredador
@@ -399,6 +402,46 @@ giro_maximo_coherente
 1
 grados
 HORIZONTAL
+
+MONITOR
+288
+87
+345
+136
+Peces
+count peces
+0
+1
+12
+
+SWITCH
+128
+535
+231
+568
+agrupar
+agrupar
+0
+1
+-1000
+
+PLOT
+273
+224
+473
+374
+Supervivencia
+Tiempo
+Peces
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count peces"
 
 @#$#@#$#@
 ## WHAT IS IT?
